@@ -49,19 +49,19 @@ A security prompt may appear in your browser the first time you use the protocol
 
 Enable "Open in Editor" to jump from a React component in your browser to its code in VS Code (WSL).
 
-1.  **Open Chrome DevTools** (`F12` or "Inspect").
-2.  Go to the **"Components" Tab**.
-3.  Click the **gear icon (⚙️)** for settings.
+1. **Open Chrome DevTools** (`F12` or "Inspect").
+2. Go to the **"Components" Tab**.
+3. Click the **gear icon (⚙️)** for settings.
 
 ![React DevTools Configuration](image-1.png)
 
-4.  In "General" settings, under "Open in Editor URL", select "Custom" and paste:
+4. In "General" settings, under "Open in Editor URL", select "Custom" and paste:
 
-    `wslvscode:///{path}:{line}:{column}`
+   `wslvscode:///{path}:{line}:{column}`
 
-    - This `wslvscode://` protocol uses our `Launch-WslVscode.ps1` script.
-    - Extra `/` is the Linux root path.
-    - `{path}`, `{line}`, `{column}` are placeholders for file location.
+   - This `wslvscode://` protocol uses our `Launch-WslVscode.ps1` script.
+   - Extra `/` is the Linux root path.
+   - `{path}`, `{line}`, `{column}` are placeholders for file location.
 
 ![React DevTools Configuration Input](image-2.png)
 
