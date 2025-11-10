@@ -9,13 +9,31 @@ This solution provides a custom URI protocol handler (`wslvscode://`) to open fi
 - Windows 10/11 with a default WSL distribution configured.
 - Visual Studio Code installed on Windows with the official WSL extension.
 - The VS Code CLI command (`code`) must be accessible within your default WSL distribution.
-- The required PowerShell scripts (`Launch-WslVscode.ps1` and `Manage-WslVscodeProtocol.ps1`) must be created and placed as instructed in prior steps.
+- The required PowerShell scripts (`Launch-WslVscode.ps1` and `Manage-WslVscodeProtocol.ps1`) must be in the same directory.
 
 ---
 
-## 🚀 Usage
+## 🚀 Installation
 
-Once the protocol has been installed using the management script (`Manage-WslVscodeProtocol.ps1`), you can use the `wslvscode://` protocol in your browser address bar or within other applications that support links:
+1.  **Clone the repository**: Before proceeding, you must clone the repository into a directory on your Windows machine.
+2.  **Open PowerShell**: Navigate to the directory where you have cloned the repository.
+3.  **Run the management script**:
+    ```powershell
+    .\Manage-WslVscodeProtocol.ps1
+    ```
+4.  **Select an option from the menu**:
+
+    - Type `I` and press Enter to **Install** the protocol.
+    - Type `U` to **Uninstall** it later.
+    - Type `V` to **Verify** that it's installed correctly.
+
+    The script will handle the necessary Windows Registry modifications automatically. You may need to accept a security prompt.
+
+---
+
+## 💡 Usage
+
+Once the protocol is installed, you can use `wslvscode://` links in your browser or other applications:
 
 - **To open a specific file:**
   `wslvscode:///home/{WSL-USER}/projects/my-file.tsx`
@@ -23,7 +41,9 @@ Once the protocol has been installed using the management script (`Manage-WslVsc
 - **To open a directory/folder:**
   `wslvscode:///home/{WSL-USER}/projects/`
 
-A security prompt will appear in your browser the first time you use it; accept it to launch VS Code directly in your WSL environment.
+A security prompt may appear in your browser the first time you use the protocol. Accept it to allow VS Code to launch.
+
+---
 
 ## ⚛️ Configure React Developer Tools
 
@@ -40,6 +60,7 @@ Enable "Open in Editor" to jump from a React component in your browser to its co
     `wslvscode:///{path}:{line}:{column}`
 
     - This `wslvscode://` protocol uses our `Launch-WslVscode.ps1` script.
+    - Extra `/` is the Linux root path.
     - `{path}`, `{line}`, `{column}` are placeholders for file location.
 
 ![React DevTools Configuration Input](image-2.png)
