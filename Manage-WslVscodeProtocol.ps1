@@ -8,26 +8,43 @@ $launcherFileName = "Launch-WslVscode.ps1"
 $registryPath = "HKCU:\Software\Classes\$protocolName"
 $launcherScriptPath = $null
 
-# --- Helper Function to Get Path from User ---
+
+# --- Helper Function to Get Path Automatically ---
 function Get-LauncherPath {
-    Write-Host "Please specify the full directory path where you saved '$launcherFileName'." -ForegroundColor Cyan
-    $dirInput = Read-Host "Enter Path (e.g. C:\Users\<user>\win-projects\WslVsCode)"
-    if (-not (Test-Path $dirInput -PathType Container)) { Write-Host "Error: The provided directory path does not exist." -ForegroundColor Red; return $false }
-    $scriptPath = Join-Path -Path $dirInput -ChildPath $launcherFileName
-    if (-not (Test-Path $scriptPath -PathType Leaf)) { Write-Host "Error: The file '$launcherFileName' was not found in that directory." -ForegroundColor Red; return $false }
+    $currentDir = $PSScriptRoot
+    $scriptPath = Join-Path -Path $currentDir -ChildPath $launcherFileName
+    
+    if (-not (Test-Path $scriptPath -PathType Leaf)) {
+        Write-Host "Error: The file '$launcherFileName' was not found in the current directory." -ForegroundColor Red
+        Write-Host "Expected Path: $scriptPath" -ForegroundColor Red
+        return $false
+    }
+    
     $scriptPath
 }
 
 # --- INSTALL FUNCTION ---
 function Install-Protocol {
     Write-Host "Starting installation..." -ForegroundColor Cyan
-    do { $launcherScriptPath = Get-LauncherPath } while ($launcherScriptPath -eq $false)
 
-    # --- CORRECCIÓN FINAL: Asegurarse de usar %1 y la sintaxis de comillas correcta ---
-    # La cadena final DEBE ser: "powershell.exe -ExecutionPolicy Bypass -File "C:\Path\To\Script.ps1" "%1""
-    $commandToRun = '"{0}" -ExecutionPolicy Bypass -File ""{1}"" ""%1"""' -f "powershell.exe", $launcherScriptPath
+    $launcherScriptPath = Get-LauncherPath
+    if ($launcherScriptPath -eq $false) {
+        Write-Host "Automatic path failed. Cannot proceed." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "Automatic path determined: $launcherScriptPath" -ForegroundColor Green
+
+    # --- FINAL SOLUTION: Use CMD /c start "" to hide the CMD window ---
+    # The final command in the registry will be: cmd /c start "" powershell.exe -WindowStyle Hidden [...]
     
-    # Registrar el protocolo
+    # Construct the internal PowerShell command with WindowStyle Hidden
+    $powerShellCommand = 'powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File ""{0}"" ""%1"""' -f $launcherScriptPath
+
+    # The command line saved to the Registry, using CMD to launch invisibly
+    # start "" is crucial for handling quotes correctly with the window title
+    $commandToRun = 'cmd /c start "" {0}' -f $powerShellCommand
+    
+    # Register the protocol
     New-Item -Path $registryPath -Force | Out-Null
     Set-ItemProperty -Path $registryPath -Name "(Default)" -Value $protocolDescription
     Set-ItemProperty -Path $registryPath -Name "URL Protocol" -Value ""
@@ -35,7 +52,7 @@ function Install-Protocol {
     New-Item -Path $commandPath -Force | Out-Null
     Set-ItemProperty -Path $commandPath -Name "(Default)" -Value $commandToRun
 
-    Write-Host "Installation complete!" -ForegroundColor Green
+    Write-Host "Installation complete! Using CMD /c start for minimal visibility." -ForegroundColor Green
     Write-Host "Registered command in Registry:" -ForegroundColor Gray
     Write-Host $commandToRun -ForegroundColor Gray
     Verify-ProtocolInstallation
@@ -48,20 +65,19 @@ function Uninstall-Protocol {
 }
 
 function Verify-ProtocolInstallation {
-    Write-Host "Verifying installation..." -ForegroundColor Blue
+     Write-Host "Verifying installation..." -ForegroundColor Blue
     if (Test-Path $registryPath) {
+        Write-Host "Registry keys found for $protocolName." -ForegroundColor Green
         $regCommand = Get-ItemProperty -Path "HKCU:\Software\Classes\$protocolName\shell\open\command" | Select-Object -ExpandProperty '(Default)'
         Write-Host "Registry command points to: $regCommand" -ForegroundColor Gray
-        $testUrl = "${protocolName}://home/test/verification.log"
-        # La verificación programática puede fallar por la caché de Windows, pero el comando del navegador sí funcionará
-        try {
-            # Start-Process -FilePath $testUrl # Comentado porque falla la caché de Windows
-            Write-Host "Automatic verification command prepared: Start-Process -FilePath $testUrl" -ForegroundColor Gray
-            Write-Host "Verification requires manual browser test due to Windows caching." -ForegroundColor Yellow
-        } catch {
-            Write-Host "ERROR during programmatic launch verification: $_" -ForegroundColor Red
-        }
-    } else { Write-Host "Verification failed: Registry keys for $protocolName not found." -ForegroundColor Red }
+        
+        Write-Host "Verification requires manual testing in a web browser." -ForegroundColor Yellow
+        Write-Host "Please open your browser and navigate to:" -ForegroundColor Cyan
+        Write-Host "wslvscode:///home/test/verification.log" -ForegroundColor Cyan
+        Write-Host "Ensure the window is hidden and check the log file (or VS Code) for success." -ForegroundColor Yellow
+    } else { 
+        Write-Host "Verification failed: Registry keys for $protocolName not found." -ForegroundColor Red 
+    }
 }
 
 Write-Host "--- $protocolName Protocol Manager ---" -ForegroundColor Blue

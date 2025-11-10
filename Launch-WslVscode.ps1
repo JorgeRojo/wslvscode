@@ -1,30 +1,29 @@
 # Launch-WslVscode.ps1
 param([string]$url)
 
-# --- Configuración de Logs (simplificado para mantenerlo limpio) ---
+# --- Log Configuration (simplified to keep it clean) ---
 $logPath = Join-Path -Path $PSScriptRoot -ChildPath "wsl_vscode_log.txt"
 function Write-Log($message) { Add-Content -Path $logPath -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $message" }
 # Write-Log("--- Script Started (No Wait) ---")
 
-# --- Procesamiento de Ruta ---
+# --- Path Processing ---
 $linuxPath = $url.Replace("wslvscode://", "")
 $linuxPath = $linuxPath.Replace("\", "/")
-$linuxPath = $linuxPath.Replace("""", "") # Limpieza de comillas
-$distro = "kali-linux"
+$linuxPath = $linuxPath.Replace("""", "") # Clean up quotes
 
 # Write-Log("Processed Linux Path (Cleaned): $linuxPath")
 
-# --- Ejecución del Comando ---
+# --- Command Execution ---
 $command = "wsl.exe"
-# Eliminamos el argumento --wait
-$arguments = "-d", $distro, "code", $linuxPath
+# Removing the --wait argument
+$arguments = "code", "--goto", $linuxPath, "--wait"
 
 # Write-Log("Executing Command: $command $arguments")
 
 try {
-    # Usamos Start-Process sin -NoNewWindow para asegurar que el proceso principal se cierre inmediatamente
-    # y el shell de PowerShell termine con él.
-    Start-Process -FilePath $command -ArgumentList $arguments
+    # We use Start-Process without -NoNewWindow to ensure the main process closes immediately
+    # and the PowerShell shell terminates with it.
+    Start-Process -FilePath $command -ArgumentList $arguments -WindowStyle Hidden -ErrorAction Stop
     # Write-Log("Command executed successfully via Start-Process. Terminal should close now.")
 }
 catch {
@@ -32,4 +31,5 @@ catch {
     Write-Log("Executed Command: $command $arguments")
 }
 
-# El script termina aquí, permitiendo que la ventana de PowerShell se cierre.
+# The script ends here, allowing the PowerShell window to close.
+
